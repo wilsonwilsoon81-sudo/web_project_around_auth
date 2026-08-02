@@ -32,26 +32,40 @@ function App() {
 
   useEffect(() => {
     if (!loggedIn) return;
+    
+    let isMounted = true;
 
-    setIsLoading(true);
-
-    Promise.all([api.getUserInfo(), api.getInitialCards()])
-      .then(([userData, cardsData]) => {
-        setCurrentUser(userData);
-
-        if (Array.isArray(cardsData)) {
-          setCards(cardsData);
-        } else {
-          console.warn("Las tarjetas no son un array:", cardsData);
-          setCards([]);
+    const fetchData = async () => {
+      if (isMounted) setIsLoading(true);
+      
+      const token = localStorage.getItem("jwt");
+      
+      try {
+        const [userData, cardsData] = await Promise.all([
+          api.getUserInfo(token),
+          api.getInitialCards(token)
+        ]);
+        
+        if (isMounted) {
+          setCurrentUser(userData);
+          setCards(Array.isArray(cardsData) ? cardsData : []);
         }
-      })
-      .catch((err) => {
-        console.error("❌ Error al cargar datos iniciales:", err);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      } catch (err) {
+        console.error("❌ Error al cargar datos iniciales (token inválido o expirado):", err);
+        if (isMounted) {
+          localStorage.removeItem("jwt");
+          setLoggedIn(false);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [loggedIn]);
 
   function handleCardLike(card) {
@@ -115,19 +129,17 @@ function App() {
 
   function handleRegister(email, password) {
     console.log("Registro:", email, password);
-    // TODO: conectar con la API en el siguiente paso
   }
 
-  // ─── Login (placeholder – se conecta en el siguiente paso) ────
   function handleLogin(email, password) {
     console.log("Login:", email, password);
-    // TODO: conectar con la API en el siguiente paso
   }
 
-  // ─── Logout (placeholder) ─────────────────────────────────
   function handleSignOut() {
+    localStorage.removeItem("jwt");
     setLoggedIn(false);
-    // TODO: eliminar JWT del localStorage en el siguiente paso
+    setIsLoading(false);
+    history.push("/signin");
   }
 
   return (
