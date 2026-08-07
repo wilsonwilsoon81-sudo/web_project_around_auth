@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom";
 import api from "../utils/api.js";
+import auth from "../utils/auth.js";
 import CurrentUserContext from "../contexts/CurrentUserContext.js";
 import Header from "./Header/Header.jsx";
 import Main from "./Main/Main.jsx";
@@ -8,6 +9,7 @@ import Footer from "./Footer/Footer.jsx";
 import Register from "./Register/Register.jsx";
 import Login from "./Login/Login.jsx";
 import ProtectedRoute from "./ProtectedRoute/ProtectedRoute.jsx";
+import InfoTooltip from "./InfoTooltip/InfoTooltip.jsx";
 
 function App() {
   const [currentUser, setCurrentUser] = useState({
@@ -17,10 +19,19 @@ function App() {
     _id: "",
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  const initialLoggedIn = !!localStorage.getItem("jwt");
+  const [isLoading, setIsLoading] = useState(initialLoggedIn);
   const [cards, setCards] = useState([]);
   const [popup, setPopup] = useState(null);
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(initialLoggedIn);
+  const [userEmail, setUserEmail] = useState("");
+
+  const [infoTooltip, setInfoTooltip] = useState({
+    isOpen: false,
+    title: "",
+    isSuccess: false,
+    message: "",
+  });
 
   function handleOpenPopup(popupData) {
     setPopup(popupData);
@@ -28,33 +39,49 @@ function App() {
 
   function handleClosePopup() {
     setPopup(null);
+    setInfoTooltip((prev) => ({ ...prev, isOpen: false }));
   }
 
+  // ─── CARGA INICIAL DE DATOS ───────────────────────────────
   useEffect(() => {
     if (!loggedIn) return;
-    
+
     let isMounted = true;
 
     const fetchData = async () => {
       if (isMounted) setIsLoading(true);
-      
-      const token = localStorage.getItem("jwt");
-      
+
+      // 1. OBTENER Y LIMPIAR EL TOKEN DEL LOCALSTORAGE
+      const token = localStorage.getItem("jwt")?.trim();
+
+      if (!token) {
+        setLoggedIn(false);
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const [userData, cardsData] = await Promise.all([
+        // 2. PASAR EL TOKEN A LAS FUNCIONES DE API
+        const [userDataResponse, cardsData] = await Promise.all([
           api.getUserInfo(token),
           api.getInitialCards(token)
         ]);
-        
+
         if (isMounted) {
-          setCurrentUser(userData);
+          // 3. MANEJAR LA ESTRUCTURA { data: { email, _id } } DEL SERVIDOR
+          const user = userDataResponse.data || userDataResponse;
+          
+          setCurrentUser(user);
+          setUserEmail(user.email || "");
           setCards(Array.isArray(cardsData) ? cardsData : []);
         }
       } catch (err) {
-        console.error("❌ Error al cargar datos iniciales (token inválido o expirado):", err);
+        console.error("❌ Error al cargar datos (Token inválido):", err);
         if (isMounted) {
           localStorage.removeItem("jwt");
           setLoggedIn(false);
+          setUserEmail("");
+          setIsLoading(false);
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -68,34 +95,31 @@ function App() {
     };
   }, [loggedIn]);
 
+  // ─── FUNCIONES DE TARJETAS Y USUARIO (TODAS RECIBEN EL TOKEN) ──
   function handleCardLike(card) {
+    const token = localStorage.getItem("jwt")?.trim();
     const isLiked = card.isLiked;
-    api
-      .toggleLike(card._id, !isLiked)
+    api.toggleLike(card._id, !isLiked, token)
       .then((newCard) => {
         setCards((state) =>
-          state.map((currentCard) =>
-            currentCard._id === card._id ? newCard : currentCard,
-          ),
+          state.map((c) => c._id === card._id ? newCard : c)
         );
       })
       .catch((err) => console.error("Error al dar/quitar like:", err));
   }
 
   function handleCardDelete(card) {
-    api
-      .deleteCard(card._id)
+    const token = localStorage.getItem("jwt")?.trim();
+    api.deleteCard(card._id, token)
       .then(() => {
-        setCards((state) =>
-          state.filter((currentCard) => currentCard._id !== card._id),
-        );
+        setCards((state) => state.filter((c) => c._id !== card._id));
       })
       .catch((err) => console.error("Error al eliminar tarjeta:", err));
   }
 
   function handleAddPlaceSubmit(cardData) {
-    return api
-      .addNewCard(cardData.name, cardData.link)
+    const token = localStorage.getItem("jwt")?.trim();
+    return api.addNewCard(cardData.name, cardData.link, token)
       .then((newCard) => {
         setCards([newCard, ...cards]);
         handleClosePopup();
@@ -104,61 +128,92 @@ function App() {
   }
 
   function handleUpdateUser(data) {
-    return api
-      .updateUserInfo(data.name, data.about)
+    const token = localStorage.getItem("jwt")?.trim();
+    return api.updateUserInfo(data.name, data.about, token)
       .then((newData) => {
         setCurrentUser(newData);
         handleClosePopup();
       })
-      .catch((err) => {
-        console.error("❌ Error al actualizar el usuario:", err);
-      });
+      .catch((err) => console.error("Error al actualizar usuario:", err));
   }
 
   function handleUpdateAvatar(data) {
-    return api
-      .updateUserAvatar(data.avatar)
+    const token = localStorage.getItem("jwt")?.trim();
+    return api.updateUserAvatar(data.avatar, token)
       .then((newData) => {
         setCurrentUser(newData);
         handleClosePopup();
       })
+      .catch((err) => console.error("Error al actualizar avatar:", err));
+  }
+
+  // ─── AUTENTICACIÓN ────────────────────────────────────────
+  function handleRegister(email, password) {
+    auth.register(email, password)
+      .then(() => {
+        setInfoTooltip({
+          isOpen: true,
+          title: "¡Éxito!",
+          message: "Te has registrado correctamente.",
+          isSuccess: true,
+        });
+        setTimeout(() => {
+          window.location.replace("/signin");
+        }, 3000);
+      })
       .catch((err) => {
-        console.error("❌ Error al actualizar el avatar:", err);
+        console.error("Error en el registro:", err);
+        setInfoTooltip({
+          isOpen: true,
+          title: "Algo salió mal",
+          message: "No se ha podido registrar. Inténtalo de nuevo.",
+          isSuccess: false,
+        });
       });
   }
 
-  function handleRegister(email, password) {
-    console.log("Registro:", email, password);
-  }
-
   function handleLogin(email, password) {
-    console.log("Login:", email, password);
+    auth.login(email, password)
+      .then((data) => {
+        // El servidor devuelve { token: "..." } o { data: { token: "..." } }
+        const token = data.token || (data.data && data.data.token);
+        
+        if (token) {
+          localStorage.setItem("jwt", token.trim());
+          setUserEmail(email);
+          setLoggedIn(true);
+          window.location.replace("/");
+        }
+      })
+      .catch((err) => {
+        console.error("Error en el login:", err);
+        setInfoTooltip({
+          isOpen: true,
+          title: "Algo salió mal",
+          message: "Email o contraseña incorrectos.",
+          isSuccess: false,
+        });
+      });
   }
 
   function handleSignOut() {
     localStorage.removeItem("jwt");
     setLoggedIn(false);
+    setUserEmail("");
     setIsLoading(false);
-    history.push("/signin");
+    window.location.replace("/signin");
   }
 
+  // ─── RENDERIZADO ──────────────────────────────────────────
   return (
     <CurrentUserContext.Provider
-      value={{
-        currentUser,
-        handleUpdateUser,
-        onUpdateAvatar: handleUpdateAvatar,
-      }}
+      value={{ currentUser, handleUpdateUser, onUpdateAvatar: handleUpdateAvatar }}
     >
       <BrowserRouter>
         <div className="page__content">
-          <Header
-            loggedIn={loggedIn}
-            onSignOut={handleSignOut}
-          />
+          <Header loggedIn={loggedIn} onSignOut={handleSignOut} email={userEmail} />
 
           <Switch>
-            {/* Ruta protegida: solo usuarios autorizados */}
             <ProtectedRoute
               exact
               path="/"
@@ -173,22 +228,24 @@ function App() {
               onClosePopup={handleClosePopup}
               popup={popup}
             />
-
-            {/* Ruta de registro: accesible sin login */}
             <Route path="/signup">
               <Register onRegister={handleRegister} />
             </Route>
-
-            {/* Ruta de login: accesible sin login */}
             <Route path="/signin">
               <Login onLogin={handleLogin} />
             </Route>
-
-            {/* Cualquier otra ruta → redirige a / */}
             <Redirect to="/" />
           </Switch>
 
           <Footer />
+
+          <InfoTooltip
+            isOpen={infoTooltip.isOpen}
+            onClose={handleClosePopup}
+            title={infoTooltip.title}
+            message={infoTooltip.message}
+            isSuccess={infoTooltip.isSuccess}
+          />
         </div>
       </BrowserRouter>
     </CurrentUserContext.Provider>

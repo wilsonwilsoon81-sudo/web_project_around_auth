@@ -6,16 +6,23 @@ function Login({ onLogin }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    onLogin(email, password);
+
+    if (password.length < 8) {
+      alert("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    onLogin(email.trim(), password.trim());
   }
 
   return (
-    <div className="login">
-      <h2 className="login__title">Iniciar sesión</h2>
-      <form className="login__form" onSubmit={handleSubmit}>
+    <div className="auth-form">
+      <h2 className="auth-form__title">Iniciar sesión</h2>
+      <form className="auth-form__form" onSubmit={handleSubmit}>
         <input
           type="email"
-          className="login__input"
+          name="email"
+          className="auth-form__input"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -23,13 +30,14 @@ function Login({ onLogin }) {
         />
         <input
           type="password"
-          className="login__input"
+          name="password"
+          className="auth-form__input"
           placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit" className="login__button">
+        <button type="submit" className="auth-form__button">
           Iniciar sesión
         </button>
       </form>

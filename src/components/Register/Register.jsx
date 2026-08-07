@@ -6,16 +6,23 @@ function Register({ onRegister }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    onRegister(email, password);
+
+    if (password.length < 8) {
+      alert("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    onRegister(email.trim(), password.trim());
   }
 
   return (
-    <div className="register">
-      <h2 className="register__title">Registro</h2>
-      <form className="register__form" onSubmit={handleSubmit}>
+    <div className="auth-form">
+      <h2 className="auth-form__title">Registro</h2>
+      <form className="auth-form__form" onSubmit={handleSubmit}>
         <input
           type="email"
-          className="register__input"
+          name="email"
+          className="auth-form__input"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -23,18 +30,22 @@ function Register({ onRegister }) {
         />
         <input
           type="password"
-          className="register__input"
+          name="password"
+          className="auth-form__input"
           placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit" className="register__button">
+        <button type="submit" className="auth-form__button">
           Registrarse
         </button>
       </form>
-      <p className="register__text">
-        ¿Ya eres miembro? <a href="/signin" className="register__link">Inicia sesión aquí</a>
+      <p className="auth-form__text">
+        ¿Ya eres miembro?{' '}
+        <a href="/signin" className="auth-form__link">
+          Inicia sesión aquí
+        </a>
       </p>
     </div>
   );
