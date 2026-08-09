@@ -37,27 +37,35 @@ function App() {
   const [selectedCard, setSelectedCard] = useState(null);
 
   // 1. Verificar token al cargar la página
+    // 1. Verificar token y cargar datos al cargar la página
   useEffect(() => {
     const token = localStorage.getItem('jwt');
+    console.log("🔍 1. Token encontrado en localStorage:", token);
+
     if (token) {
+      // A. Verificar usuario (Si esto falla, sí borramos el token)
       api.getUserInfo(token)
         .then((res) => {
-          // ✅ CORRECCIÓN CLAVE: La API devuelve { data: { email, _id } }
-          // Así que guardamos res.data en el estado
-          setCurrentUser(res.data); 
+          console.log("✅ 2. Respuesta exitosa de /users/me:", res);
+          setCurrentUser(res.data);
           setIsLoggedIn(true);
-          
-          // Si el usuario es válido, cargamos sus tarjetas
-          return api.getInitialCards(token);
-        })
-        .then((cardsData) => {
-          setCards(cardsData);
         })
         .catch((err) => {
-          console.warn('Token inválido o expirado. Limpiando sesión.', err);
+          console.error("❌ ERROR REAL en /users/me (Token inválido):", err);
           localStorage.removeItem('jwt');
           setIsLoggedIn(false);
           setCurrentUser({ name: '', avatar: '', email: '' });
+        });
+
+      // B. Cargar tarjetas (Si esto falla, NO borramos el token, solo mostramos array vacío)
+      api.getInitialCards(token)
+        .then((cardsData) => {
+          console.log("✅ Tarjetas cargadas exitosamente:", cardsData);
+          setCards(cardsData);
+        })
+        .catch((err) => {
+          console.warn("⚠️ No se pudieron cargar las tarjetas (quizás el endpoint cambió o no hay tarjetas):", err);
+          setCards([]); // Dejamos el array vacío, pero el usuario sigue logueado
         });
     }
   }, []);
