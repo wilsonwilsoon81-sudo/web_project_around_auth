@@ -2,7 +2,7 @@ import { useState, useContext } from "react";
 import CurrentUserContext from "../../../../contexts/CurrentUserContext.js";
 
 export default function EditProfile({ isOpen, onClose, onUpdateUser }) {
-  // ✅ Hooks SIEMPRE al principio
+  
   const currentUser = useContext(CurrentUserContext) || {};
 
   const [name, setName] = useState(currentUser?.name || "");

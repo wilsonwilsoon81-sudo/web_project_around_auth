@@ -5,16 +5,17 @@ import '../../blocks/Header.css';
 function Header({ loggedIn, email, onSignOut }) {
   const location = useLocation();
 
-  // Si está en la página de registro
   if (location.pathname === '/sign-up') {
     return (
       <header className="header">
         <img src={logo} alt="Logo Around" className="header__logo" />
+        <Link to="/sign-in" className="header__link">
+          Iniciar sesión
+        </Link>
       </header>
     );
   }
 
-  // Si está en la página de login
   if (location.pathname === '/sign-in') {
     return (
       <header className="header">
@@ -26,10 +27,9 @@ function Header({ loggedIn, email, onSignOut }) {
     );
   }
 
-  // Si está logueado (página principal)
   if (loggedIn) {
     return (
-      <header className="header header_logged">
+      <header className="header">
         <img src={logo} alt="Logo Around" className="header__logo" />
         <div className="header__user">
           <p className="header__email">{email}</p>

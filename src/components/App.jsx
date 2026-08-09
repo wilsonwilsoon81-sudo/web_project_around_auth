@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
-
-// Componentes
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Header from './Header/Header';
 import Main from './Main/Main';
 import Footer from './Footer/Footer';
@@ -13,37 +11,30 @@ import Register from './Register/Register';
 import Login from './Login/Login';
 import InfoTooltip from './InfoTooltip/InfoTooltip';
 import ProtectedRoute from './ProtectedRoute/ProtectedRoute';
-
-// Contextos y API
 import CurrentUserContext from '../contexts/CurrentUserContext';
 import * as api from '../utils/api'; 
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Estados de autenticación
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInfoTooltipOpen, setIsInfoTooltipOpen] = useState(false);
   const [isRegisterSuccess, setIsRegisterSuccess] = useState(false);
 
-  // Estados de la aplicación
   const [currentUser, setCurrentUser] = useState({ name: '', avatar: '', email: '' });
   const [cards, setCards] = useState([]);
   
-  // Estados de modales
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
   const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
 
-  // 1. Verificar token al cargar la página
-    // 1. Verificar token y cargar datos al cargar la página
   useEffect(() => {
     const token = localStorage.getItem('jwt');
     console.log("🔍 1. Token encontrado en localStorage:", token);
 
     if (token) {
-      // A. Verificar usuario (Si esto falla, sí borramos el token)
       api.getUserInfo(token)
         .then((res) => {
           console.log("✅ 2. Respuesta exitosa de /users/me:", res);
@@ -57,7 +48,6 @@ function App() {
           setCurrentUser({ name: '', avatar: '', email: '' });
         });
 
-      // B. Cargar tarjetas (Si esto falla, NO borramos el token, solo mostramos array vacío)
       api.getInitialCards(token)
         .then((cardsData) => {
           console.log("✅ Tarjetas cargadas exitosamente:", cardsData);
@@ -65,12 +55,11 @@ function App() {
         })
         .catch((err) => {
           console.warn("⚠️ No se pudieron cargar las tarjetas (quizás el endpoint cambió o no hay tarjetas):", err);
-          setCards([]); // Dejamos el array vacío, pero el usuario sigue logueado
+          setCards([]);
         });
     }
   }, []);
 
-  // 2. Manejar Registro
   const handleRegister = ({ email, password }) => {
     api.register(email, password)
       .then(() => {
@@ -85,15 +74,12 @@ function App() {
       });
   };
 
-  // 3. Manejar Login
   const handleLogin = ({ email, password }) => {
     api.authorize(email, password)
       .then((data) => {
-        // La API devuelve { token: "..." }
         if (data.token) {
           localStorage.setItem('jwt', data.token);
           setIsLoggedIn(true);
-          // Guardamos el email para que el Header lo muestre inmediatamente
           setCurrentUser((prev) => ({ ...prev, email: email }));
           navigate('/', { replace: true });
         }
@@ -105,7 +91,6 @@ function App() {
       });
   };
 
-  // 4. Manejar Cierre de sesión
   const handleSignOut = () => {
     localStorage.removeItem('jwt');
     setIsLoggedIn(false);
@@ -114,7 +99,6 @@ function App() {
     navigate('/sign-in', { replace: true });
   };
 
-  // Placeholders para las tarjetas (se implementarán en el siguiente paso)
   const handleCardLike = (card) => {
     console.log("Dar like a:", card);
   };
@@ -123,7 +107,6 @@ function App() {
     console.log("Eliminar tarjeta:", card);
   };
 
-  // Función para cerrar todos los popups
   const closeAllPopups = () => {
     setIsEditProfileOpen(false);
     setIsAddCardOpen(false);
@@ -161,7 +144,7 @@ function App() {
         />
       </Routes>
 
-      {/* Modales con renderizado condicional específico */}
+      
       {isLoggedIn && isEditProfileOpen && (
         <EditProfile onClose={closeAllPopups} />
       )}
@@ -184,7 +167,8 @@ function App() {
         isRegisterSuccess={isRegisterSuccess}
       />
       
-      <Footer />
+      {location.pathname === '/' && <Footer />}
+
     </CurrentUserContext.Provider>
   );
 }

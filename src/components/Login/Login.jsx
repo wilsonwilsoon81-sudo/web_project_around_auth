@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../../blocks/Login.css';
 
 function Login({ onLogin }) {
   const [email, setEmail] = React.useState('');
@@ -13,7 +12,7 @@ function Login({ onLogin }) {
 
   return (
     <main className="login">
-      <h2 className="login__title">Iniciar sesión</h2>
+      <h2 className="login__title">Inicia sesión</h2>
       <form className="login__form" onSubmit={handleSubmit}>
         <input
           type="email"
@@ -32,13 +31,13 @@ function Login({ onLogin }) {
           required
         />
         <button type="submit" className="login__button">
-          Iniciar sesión
+          Inicia sesión
         </button>
       </form>
       <p className="login__text">
-        ¿Aún no estás registrado?{' '}
+        ¿Aún no eres miembro?{' '}
         <Link to="/sign-up" className="login__link">
-          Registrarse
+          Registrarse aquí
         </Link>
       </p>
     </main>

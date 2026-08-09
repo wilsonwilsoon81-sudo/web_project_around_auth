@@ -11,7 +11,7 @@ export default function Main({
   onEditAvatar,
   onCardClick,
 }) {
-  // ✅ CORRECCIÓN 1: El contexto entrega el objeto directamente, no lo desestructuramos.
+  
   const currentUser = useContext(CurrentUserContext) || { name: "", about: "", avatar: "" };
 
   return (
@@ -31,7 +31,7 @@ export default function Main({
             className="profile__edit-avatar"
             aria-label="Editar avatar"
             id="edit-avatar-button"
-            onClick={onEditAvatar} // ✅ CORRECCIÓN 3: Llamamos a la prop directa
+            onClick={onEditAvatar}
           ></button>
         </div>
 
@@ -43,7 +43,7 @@ export default function Main({
             aria-label="Editar perfil"
             className="profile__edit-button"
             type="button"
-            onClick={onEditProfile} // ✅ CORRECCIÓN 3: Llamamos a la prop directa
+            onClick={onEditProfile}
           ></button>
           <p className="profile__description">
             {currentUser?.about || "Cargando..."}
@@ -54,7 +54,7 @@ export default function Main({
           aria-label="Agregar tarjeta"
           className="profile__add-button"
           type="button"
-          onClick={onAddCard} // ✅ CORRECCIÓN 3: Llamamos a la prop directa
+          onClick={onAddCard}
         ></button>
       </section>
 
@@ -65,7 +65,7 @@ export default function Main({
               <Card
                 key={card._id}
                 card={card}
-                onCardClick={onCardClick} // ✅ Pasamos la función para abrir la imagen
+                onCardClick={onCardClick}
                 onCardLike={onCardLike}
                 onCardDelete={onCardDelete}
               />
@@ -73,8 +73,7 @@ export default function Main({
         </ul>
       </section>
 
-      {/* ✅ CORRECCIÓN 2: Eliminamos el renderizado genérico de <Popup> porque 
-          App.jsx ahora controla los modales individualmente. */}
+      {}
     </main>
   );
 }

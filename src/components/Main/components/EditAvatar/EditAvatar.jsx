@@ -2,7 +2,7 @@ import { useRef, useContext, useState } from "react";
 import CurrentUserContext from "../../../../contexts/CurrentUserContext.js";
 
 export default function EditAvatar({ isOpen, onClose, onUpdateAvatar }) {
-  // ✅ Hooks SIEMPRE al principio
+  
   const currentUser = useContext(CurrentUserContext) || {};
   const avatarInputRef = useRef();
   

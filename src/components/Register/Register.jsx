@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../../blocks/Register.css';
 
 function Register({ onRegister }) {
   const [email, setEmail] = React.useState('');
@@ -36,9 +35,9 @@ function Register({ onRegister }) {
         </button>
       </form>
       <p className="register__text">
-        ¿Ya estás registrado?{' '}
+        ¿Ya eres miembro?{' '}
         <Link to="/sign-in" className="register__link">
-          Iniciar sesión
+          Inicia sesión aquí
         </Link>
       </p>
     </main>

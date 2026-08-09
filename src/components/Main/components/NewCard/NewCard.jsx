@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function NewCard({ isOpen, onClose, onAddPlace }) {
-  // ✅ Hooks SIEMPRE al principio
+  
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const [nameError, setNameError] = useState("");

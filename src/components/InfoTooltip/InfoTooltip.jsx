@@ -3,42 +3,34 @@ import successIcon from '../../images/chulo.png';
 import errorIcon from '../../images/equis.png';
 
 function InfoTooltip({ isOpen, onClose, isRegisterSuccess }) {
-  // ✅ CLAVE: Si isOpen es false, NO renderizamos NADA. Punto.
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className="tooltip tooltip_opened">
-      <div className="tooltip__container">
+    <div className="tooltip-overlay">
+      <div className="tooltip-box">
         <button 
           type="button" 
-          className="tooltip__close"
+          className="tooltip-close-btn"
           onClick={onClose}
+          aria-label="Cerrar"
         >
           <img src={closeIcon} alt="Cerrar" />
         </button>
         
         {isRegisterSuccess ? (
           <>
-            <img 
-              src={successIcon} 
-              alt="Éxito" 
-              className="tooltip__icon"
-            />
-            <h3 className="tooltip__title">
-              ¡Éxito! Ya estás registrado
+            <img src={successIcon} alt="Éxito" className="tooltip-icon" />
+            <h3 className="tooltip-title">
+              ¡Correcto! Ya estás registrado
             </h3>
           </>
         ) : (
           <>
-            <img 
-              src={errorIcon} 
-              alt="Error" 
-              className="tooltip__icon"
-            />
-            <h3 className="tooltip__title">
-              ¡Algo salió mal! Inténtalo de nuevo
+            <img src={errorIcon} alt="Error" className="tooltip-icon" />
+            <h3 className="tooltip-title">
+              Uy, ¡Algo salió mal! Por favor, inténtalo de nuevo.
             </h3>
           </>
         )}
