@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import '../../blocks/Register.css';
 
 function Register({ onRegister }) {
   const [email, setEmail] = React.useState('');
@@ -6,48 +8,40 @@ function Register({ onRegister }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-
-    if (password.length < 8) {
-      alert("La contraseña debe tener al menos 8 caracteres.");
-      return;
-    }
-
-    onRegister(email.trim(), password.trim());
+    onRegister({ email, password });
   }
 
   return (
-    <div className="auth-form">
-      <h2 className="auth-form__title">Registro</h2>
-      <form className="auth-form__form" onSubmit={handleSubmit}>
+    <main className="register">
+      <h2 className="register__title">Regístrate</h2>
+      <form className="register__form" onSubmit={handleSubmit}>
         <input
           type="email"
-          name="email"
-          className="auth-form__input"
-          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          className="register__input"
           required
         />
         <input
           type="password"
-          name="password"
-          className="auth-form__input"
-          placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          placeholder="Contraseña"
+          className="register__input"
           required
         />
-        <button type="submit" className="auth-form__button">
+        <button type="submit" className="register__button">
           Registrarse
         </button>
       </form>
-      <p className="auth-form__text">
-        ¿Ya eres miembro?{' '}
-        <a href="/signin" className="auth-form__link">
-          Inicia sesión aquí
-        </a>
+      <p className="register__text">
+        ¿Ya estás registrado?{' '}
+        <Link to="/sign-in" className="register__link">
+          Iniciar sesión
+        </Link>
       </p>
-    </div>
+    </main>
   );
 }
 

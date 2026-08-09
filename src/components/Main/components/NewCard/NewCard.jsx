@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-export default function NewCard({ onAddPlace }) {
+export default function NewCard({ isOpen, onClose, onAddPlace }) {
+  // ✅ Hooks SIEMPRE al principio
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const [nameError, setNameError] = useState("");
@@ -8,22 +9,14 @@ export default function NewCard({ onAddPlace }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function validateName(value) {
-    if (!value || value.trim() === "") {
-      return "El nombre es obligatorio";
-    }
-    if (value.length < 2) {
-      return "El nombre debe tener al menos 2 caracteres";
-    }
-    if (value.length > 30) {
-      return "El nombre no puede tener más de 30 caracteres";
-    }
+    if (!value || value.trim() === "") return "El nombre es obligatorio";
+    if (value.length < 2) return "El nombre debe tener al menos 2 caracteres";
+    if (value.length > 30) return "El nombre no puede tener más de 30 caracteres";
     return "";
   }
 
   function validateLink(value) {
-    if (!value || value.trim() === "") {
-      return "La URL es obligatoria";
-    }
+    if (!value || value.trim() === "") return "La URL es obligatoria";
     try {
       new URL(value);
       return "";
@@ -49,27 +42,23 @@ export default function NewCard({ onAddPlace }) {
   function handleSubmit(e) {
     e.preventDefault();
     if (!isValid) return;
-
     setIsSubmitting(true);
 
-    onAddPlace({ name, link }).finally(() => {
+    if (onAddPlace) {
+      onAddPlace({ name, link })
+        .then(() => { if (onClose) onClose(); })
+        .catch((err) => console.error("Error al crear tarjeta:", err))
+        .finally(() => { setIsSubmitting(false); });
+    } else {
       setIsSubmitting(false);
-    });
+    }
   }
 
   return (
-    <form
-      className="popup__form"
-      name="new-place-form"
-      id="new-place-form"
-      noValidate
-      onSubmit={handleSubmit}
-    >
+    <form className="popup__form" name="new-place-form" id="new-place-form" noValidate onSubmit={handleSubmit}>
       <label className="popup__label">
         <input
-          className={`popup__input popup__input_type_name ${
-            nameError ? "popup__input_type_invalid" : ""
-          }`}
+          className={`popup__input popup__input_type_name ${nameError ? "popup__input_type_invalid" : ""}`}
           id="place-name"
           maxLength="30"
           minLength="2"
@@ -80,21 +69,14 @@ export default function NewCard({ onAddPlace }) {
           value={name}
           onChange={handleNameChange}
         />
-        <span
-          className={`popup__input-error ${
-            nameError ? "popup__input-error_active" : ""
-          }`}
-          id="place-name-error"
-        >
+        <span className={`popup__input-error ${nameError ? "popup__input-error_active" : ""}`} id="place-name-error">
           {nameError}
         </span>
       </label>
 
       <label className="popup__label">
         <input
-          className={`popup__input popup__input_type_url ${
-            linkError ? "popup__input_type_invalid" : ""
-          }`}
+          className={`popup__input popup__input_type_url ${linkError ? "popup__input_type_invalid" : ""}`}
           id="place-link"
           name="link"
           placeholder="Enlace a la imagen"
@@ -103,23 +85,12 @@ export default function NewCard({ onAddPlace }) {
           value={link}
           onChange={handleLinkChange}
         />
-        <span
-          className={`popup__input-error ${
-            linkError ? "popup__input-error_active" : ""
-          }`}
-          id="place-link-error"
-        >
+        <span className={`popup__input-error ${linkError ? "popup__input-error_active" : ""}`} id="place-link-error">
           {linkError}
         </span>
       </label>
 
-      <button
-        className={`button popup__button ${
-          !isValid ? "popup__button_disabled" : ""
-        }`}
-        type="submit"
-        disabled={isSubmitting || !isValid}
-      >
+      <button className={`button popup__button ${!isValid ? "popup__button_disabled" : ""}`} type="submit" disabled={isSubmitting || !isValid}>
         {isSubmitting ? "Creando..." : "Crear"}
       </button>
     </form>

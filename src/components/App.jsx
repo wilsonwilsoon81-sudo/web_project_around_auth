@@ -1,253 +1,183 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom";
-import api from "../utils/api.js";
-import auth from "../utils/auth.js";
-import CurrentUserContext from "../contexts/CurrentUserContext.js";
-import Header from "./Header/Header.jsx";
-import Main from "./Main/Main.jsx";
-import Footer from "./Footer/Footer.jsx";
-import Register from "./Register/Register.jsx";
-import Login from "./Login/Login.jsx";
-import ProtectedRoute from "./ProtectedRoute/ProtectedRoute.jsx";
-import InfoTooltip from "./InfoTooltip/InfoTooltip.jsx";
+import { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+
+// Componentes
+import Header from './Header/Header';
+import Main from './Main/Main';
+import Footer from './Footer/Footer';
+import ImagePopup from './ImagePopup/ImagePopup';
+import EditProfile from './Main/components/EditProfile/EditProfile';
+import NewCard from './Main/components/NewCard/NewCard';
+import EditAvatar from './Main/components/EditAvatar/EditAvatar';
+import Register from './Register/Register';
+import Login from './Login/Login';
+import InfoTooltip from './InfoTooltip/InfoTooltip';
+import ProtectedRoute from './ProtectedRoute/ProtectedRoute';
+
+// Contextos y API
+import CurrentUserContext from '../contexts/CurrentUserContext';
+import * as api from '../utils/api'; // ✅ Importamos el nuevo módulo
 
 function App() {
-  const [currentUser, setCurrentUser] = useState({
-    name: "",
-    about: "",
-    avatar: "",
-    _id: "",
-  });
+  const navigate = useNavigate();
 
-  const initialLoggedIn = !!localStorage.getItem("jwt");
-  const [isLoading, setIsLoading] = useState(initialLoggedIn);
+  // Estados de autenticación
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isInfoTooltipOpen, setIsInfoTooltipOpen] = useState(false);
+  const [isRegisterSuccess, setIsRegisterSuccess] = useState(false);
+
+  // Estados de la aplicación
+  const [currentUser, setCurrentUser] = useState({ name: '', avatar: '', email: '' });
   const [cards, setCards] = useState([]);
-  const [popup, setPopup] = useState(null);
-  const [loggedIn, setLoggedIn] = useState(initialLoggedIn);
-  const [userEmail, setUserEmail] = useState("");
+  
+  // Estados de modales
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isAddCardOpen, setIsAddCardOpen] = useState(false);
+  const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
 
-  const [infoTooltip, setInfoTooltip] = useState({
-    isOpen: false,
-    title: "",
-    isSuccess: false,
-    message: "",
-  });
-
-  function handleOpenPopup(popupData) {
-    setPopup(popupData);
-  }
-
-  function handleClosePopup() {
-    setPopup(null);
-    setInfoTooltip((prev) => ({ ...prev, isOpen: false }));
-  }
-
-  // ─── CARGA INICIAL DE DATOS ───────────────────────────────
+  // 1. Verificar token al cargar la página
   useEffect(() => {
-    if (!loggedIn) return;
-
-    let isMounted = true;
-
-    const fetchData = async () => {
-      if (isMounted) setIsLoading(true);
-
-      // 1. OBTENER Y LIMPIAR EL TOKEN DEL LOCALSTORAGE
-      const token = localStorage.getItem("jwt")?.trim();
-
-      if (!token) {
-        setLoggedIn(false);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        // 2. PASAR EL TOKEN A LAS FUNCIONES DE API
-        const [userDataResponse, cardsData] = await Promise.all([
-          api.getUserInfo(token),
-          api.getInitialCards(token)
-        ]);
-
-        if (isMounted) {
-          // 3. MANEJAR LA ESTRUCTURA { data: { email, _id } } DEL SERVIDOR
-          const user = userDataResponse.data || userDataResponse;
-          
+    const token = localStorage.getItem('jwt');
+    if (token) {
+      api.getUserInfo(token)
+        .then((user) => {
           setCurrentUser(user);
-          setUserEmail(user.email || "");
-          setCards(Array.isArray(cardsData) ? cardsData : []);
-        }
-      } catch (err) {
-        console.error("❌ Error al cargar datos (Token inválido):", err);
-        if (isMounted) {
-          localStorage.removeItem("jwt");
-          setLoggedIn(false);
-          setUserEmail("");
-          setIsLoading(false);
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [loggedIn]);
-
-  // ─── FUNCIONES DE TARJETAS Y USUARIO (TODAS RECIBEN EL TOKEN) ──
-  function handleCardLike(card) {
-    const token = localStorage.getItem("jwt")?.trim();
-    const isLiked = card.isLiked;
-    api.toggleLike(card._id, !isLiked, token)
-      .then((newCard) => {
-        setCards((state) =>
-          state.map((c) => c._id === card._id ? newCard : c)
-        );
-      })
-      .catch((err) => console.error("Error al dar/quitar like:", err));
-  }
-
-  function handleCardDelete(card) {
-    const token = localStorage.getItem("jwt")?.trim();
-    api.deleteCard(card._id, token)
-      .then(() => {
-        setCards((state) => state.filter((c) => c._id !== card._id));
-      })
-      .catch((err) => console.error("Error al eliminar tarjeta:", err));
-  }
-
-  function handleAddPlaceSubmit(cardData) {
-    const token = localStorage.getItem("jwt")?.trim();
-    return api.addNewCard(cardData.name, cardData.link, token)
-      .then((newCard) => {
-        setCards([newCard, ...cards]);
-        handleClosePopup();
-      })
-      .catch((err) => console.error("Error al agregar tarjeta:", err));
-  }
-
-  function handleUpdateUser(data) {
-    const token = localStorage.getItem("jwt")?.trim();
-    return api.updateUserInfo(data.name, data.about, token)
-      .then((newData) => {
-        setCurrentUser(newData);
-        handleClosePopup();
-      })
-      .catch((err) => console.error("Error al actualizar usuario:", err));
-  }
-
-  function handleUpdateAvatar(data) {
-    const token = localStorage.getItem("jwt")?.trim();
-    return api.updateUserAvatar(data.avatar, token)
-      .then((newData) => {
-        setCurrentUser(newData);
-        handleClosePopup();
-      })
-      .catch((err) => console.error("Error al actualizar avatar:", err));
-  }
-
-  // ─── AUTENTICACIÓN ────────────────────────────────────────
-  function handleRegister(email, password) {
-    auth.register(email, password)
-      .then(() => {
-        setInfoTooltip({
-          isOpen: true,
-          title: "¡Éxito!",
-          message: "Te has registrado correctamente.",
-          isSuccess: true,
+          setIsLoggedIn(true);
+          // Si el usuario es válido, cargamos sus tarjetas
+          return api.getInitialCards(token);
+        })
+        .then((cardsData) => {
+          setCards(cardsData);
+        })
+        .catch((err) => {
+          console.error('Token inválido o expirado:', err);
+          localStorage.removeItem('jwt');
+          setIsLoggedIn(false);
         });
-        setTimeout(() => {
-          window.location.replace("/signin");
-        }, 3000);
+    }
+  }, []);
+
+  // 2. Manejar Registro
+  const handleRegister = ({ email, password }) => {
+    api.register(email, password)
+      .then(() => {
+        setIsRegisterSuccess(true);
+        setIsInfoTooltipOpen(true);
+        // Redirigir al login después de registrar
+        navigate('/sign-in');
       })
       .catch((err) => {
-        console.error("Error en el registro:", err);
-        setInfoTooltip({
-          isOpen: true,
-          title: "Algo salió mal",
-          message: "No se ha podido registrar. Inténtalo de nuevo.",
-          isSuccess: false,
-        });
+        console.error('Error en registro:', err);
+        setIsRegisterSuccess(false);
+        setIsInfoTooltipOpen(true);
       });
-  }
+  };
 
-  function handleLogin(email, password) {
-    auth.login(email, password)
+  // 3. Manejar Login
+  const handleLogin = ({ email, password }) => {
+    api.authorize(email, password)
       .then((data) => {
-        // El servidor devuelve { token: "..." } o { data: { token: "..." } }
-        const token = data.token || (data.data && data.data.token);
-        
-        if (token) {
-          localStorage.setItem("jwt", token.trim());
-          setUserEmail(email);
-          setLoggedIn(true);
-          window.location.replace("/");
+        // La API de TripleTen devuelve { token: "..." }
+        if (data.token) {
+          localStorage.setItem('jwt', data.token);
+          setIsLoggedIn(true);
+          setCurrentUser((prev) => ({ ...prev, email: email }));
+          navigate('/', { replace: true });
         }
       })
       .catch((err) => {
-        console.error("Error en el login:", err);
-        setInfoTooltip({
-          isOpen: true,
-          title: "Algo salió mal",
-          message: "Email o contraseña incorrectos.",
-          isSuccess: false,
-        });
+        console.error('Error en login:', err);
+        // Opcional: mostrar tooltip de error
+        setIsRegisterSuccess(false);
+        setIsInfoTooltipOpen(true);
       });
-  }
+  };
 
-  function handleSignOut() {
-    localStorage.removeItem("jwt");
-    setLoggedIn(false);
-    setUserEmail("");
-    setIsLoading(false);
-    window.location.replace("/signin");
-  }
+  // 4. Manejar Cierre de sesión
+  const handleSignOut = () => {
+    localStorage.removeItem('jwt');
+    setIsLoggedIn(false);
+    setCurrentUser({ name: '', avatar: '', email: '' });
+    setCards([]);
+    navigate('/sign-in', { replace: true });
+  };
 
-  // ─── RENDERIZADO ──────────────────────────────────────────
+  const handleCardLike = (card) => {
+    console.log("Dar like a:", card);
+    // Aquí irá la lógica de la API para dar like en el próximo paso
+  };
+
+  const handleCardDelete = (card) => {
+    console.log("Eliminar tarjeta:", card);
+    // Aquí irá la lógica de la API para eliminar en el próximo paso
+  };
+
+  // Función para cerrar todos los popups
+  const closeAllPopups = () => {
+    setIsEditProfileOpen(false);
+    setIsAddCardOpen(false);
+    setIsEditAvatarOpen(false);
+    setSelectedCard(null);
+    setIsInfoTooltipOpen(false);
+  };
+
   return (
-    <CurrentUserContext.Provider
-      value={{ currentUser, handleUpdateUser, onUpdateAvatar: handleUpdateAvatar }}
-    >
-      <BrowserRouter>
-        <div className="page__content">
-          <Header loggedIn={loggedIn} onSignOut={handleSignOut} email={userEmail} />
-
-          <Switch>
-            <ProtectedRoute
-              exact
-              path="/"
-              component={Main}
-              loggedIn={loggedIn}
-              cards={cards}
-              isLoading={isLoading}
-              onCardLike={handleCardLike}
-              onCardDelete={handleCardDelete}
-              onAddPlace={handleAddPlaceSubmit}
-              onOpenPopup={handleOpenPopup}
-              onClosePopup={handleClosePopup}
-              popup={popup}
-            />
-            <Route path="/signup">
-              <Register onRegister={handleRegister} />
-            </Route>
-            <Route path="/signin">
-              <Login onLogin={handleLogin} />
-            </Route>
-            <Redirect to="/" />
-          </Switch>
-
-          <Footer />
-
-          <InfoTooltip
-            isOpen={infoTooltip.isOpen}
-            onClose={handleClosePopup}
-            title={infoTooltip.title}
-            message={infoTooltip.message}
-            isSuccess={infoTooltip.isSuccess}
+    <CurrentUserContext.Provider value={currentUser || { name: '', avatar: '', email: '' }}>
+      
+        <Header 
+          loggedIn={isLoggedIn} 
+          email={currentUser.email}
+          onSignOut={handleSignOut}
+        />
+        
+        <Routes>
+          <Route path="/sign-up" element={<Register onRegister={handleRegister} />} />
+          <Route path="/sign-in" element={<Login onLogin={handleLogin} />} />
+          <Route 
+            path="/" 
+            element={
+              <ProtectedRoute 
+                loggedIn={isLoggedIn}
+                component={Main}
+                cards={cards}
+                onEditProfile={() => setIsEditProfileOpen(true)}
+                onAddCard={() => setIsAddCardOpen(true)}
+                onEditAvatar={() => setIsEditAvatarOpen(true)}
+                onCardClick={setSelectedCard}
+                onCardLike={handleCardLike}
+                onCardDelete={handleCardDelete}
+              />
+            } 
           />
-        </div>
-      </BrowserRouter>
+        </Routes>
+
+        {/* Modales solo si está logueado */}
+        {isLoggedIn && isEditProfileOpen && (
+          <EditProfile onClose={closeAllPopups} />
+        )}
+
+        {isLoggedIn && isEditAvatarOpen && (
+          <EditAvatar onClose={closeAllPopups} />
+        )}
+
+        {isLoggedIn && isAddCardOpen && (
+          <NewCard onClose={closeAllPopups} />
+        )}
+
+        {isLoggedIn && selectedCard && (
+          <ImagePopup card={selectedCard} onClose={closeAllPopups} />
+        )}
+
+        {/* Tooltip de registro (puede estar fuera porque se controla con su propio estado) */}
+        <InfoTooltip 
+          isOpen={isInfoTooltipOpen}
+          onClose={closeAllPopups}
+          isRegisterSuccess={isRegisterSuccess}
+        />
+        
+        <Footer />
+      
     </CurrentUserContext.Provider>
   );
 }

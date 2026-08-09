@@ -1,40 +1,51 @@
-class Auth {
-  constructor(options) {
-    this._baseUrl = options.baseUrl;
-    this._headers = options.headers;
-  }
+// src/utils/auth.js
 
-  _checkResponse(res) {
-    if (res.ok) {
-      return res.json();
-    }
+export const BASE_URL = 'https://auth.nomoreparties.co';
+
+// Función para registrar un nuevo usuario
+export const register = (email, password) => {
+  return fetch(`${BASE_URL}/signup`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ email, password })
+  })
+  .then((res) => {
+    if (res.ok) return res.json();
     return Promise.reject(`Error: ${res.status}`);
-  }
+  });
+};
 
-  register(email, password) {
-    return fetch(`${this._baseUrl}/signup`, {
-      method: "POST",
-      headers: this._headers,
-      body: JSON.stringify({ email, password }),
-    }).then(this._checkResponse.bind(this));
-  }
+// Función para iniciar sesión
+export const authorize = (email, password) => {
+  return fetch(`${BASE_URL}/signin`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ email, password })
+  })
+  .then((res) => {
+    if (res.ok) return res.json();
+    return Promise.reject(`Error: ${res.status}`);
+  });
+};
 
-  login(email, password) {
-    return fetch(`${this._baseUrl}/signin`, {
-      method: "POST",
-      headers: this._headers,
-      body: JSON.stringify({ email, password }),
-    }).then(this._checkResponse.bind(this));
-  }
-}
-
-// ⚠️ URL UNIFICADA SEGÚN EL BRIEF
-const auth = new Auth({
-  baseUrl: "https://se-register-api.en.tripleten-services.com/v1",
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
-
-export default auth;
+// Función para verificar el token y obtener el email del usuario
+export const checkToken = (token) => {
+  return fetch(`${BASE_URL}/users/me`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    }
+  })
+  .then((res) => {
+    if (res.ok) return res.json();
+    return Promise.reject(`Error: ${res.status}`);
+  });
+};

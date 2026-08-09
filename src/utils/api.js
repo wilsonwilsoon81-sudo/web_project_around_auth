@@ -1,96 +1,53 @@
-class Api {
-  constructor(options) {
-    this._baseUrl = options.baseUrl;
-    this._headers = options.headers;
-  }
+const BASE_URL = 'https://se-register-api.en.tripleten-services.com/v1';
 
-  _checkResponse(res) {
-    if (res.ok) {
-      return res.json();
-    }
-    return Promise.reject(`Error: ${res.status}`);
-  }
+// Función auxiliar para manejar las respuestas y errores
+const checkResponse = (res) => {
+  return res.ok ? res.json() : Promise.reject(`Error: ${res.status}`);
+};
 
-  getUserInfo(token) {
-    return fetch(`${this._baseUrl}/users/me`, {
-      headers: {
-        ...this._headers,
-        // ⚠️ EXACTAMENTE COMO DICE EL BRIEF
-        authorization: `Bearer ${token}`, 
-      },
-    }).then(this._checkResponse.bind(this));
-  }
+// 1. Registro de usuario
+export const register = (email, password) => {
+  return fetch(`${BASE_URL}/signup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  }).then(checkResponse);
+};
 
-  updateUserInfo(name, about, token) {
-    return fetch(`${this._baseUrl}/users/me`, {
-      method: "PATCH",
-      headers: {
-        ...this._headers,
-        authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ name, about }),
-    }).then(this._checkResponse.bind(this));
-  }
+// 2. Inicio de sesión (Autorización)
+export const authorize = (email, password) => {
+  return fetch(`${BASE_URL}/signin`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  }).then(checkResponse);
+};
 
-  updateUserAvatar(avatarUrl, token) {
-    return fetch(`${this._baseUrl}/users/me/avatar`, {
-      method: "PATCH",
-      headers: {
-        ...this._headers,
-        authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ avatar: avatarUrl }),
-    }).then(this._checkResponse.bind(this));
-  }
+// 3. Obtener información del usuario (PROTEGIDO)
+export const getUserInfo = (token) => {
+  return fetch(`${BASE_URL}/users/me`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`, // ✅ CLAVE: Enviamos el token
+    },
+  }).then(checkResponse);
+};
 
-  getInitialCards(token) {
-    return fetch(`${this._baseUrl}/cards`, {
-      headers: {
-        ...this._headers,
-        authorization: `Bearer ${token}`,
-      },
-    }).then(this._checkResponse.bind(this));
-  }
+// 4. Obtener las tarjetas iniciales (PROTEGIDO)
+export const getInitialCards = (token) => {
+  return fetch(`${BASE_URL}/cards`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`, // ✅ CLAVE: Enviamos el token
+    },
+  }).then(checkResponse);
+};
 
-  addNewCard(name, link, token) {
-    return fetch(`${this._baseUrl}/cards`, {
-      method: "POST",
-      headers: {
-        ...this._headers,
-        authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ name, link }),
-    }).then(this._checkResponse.bind(this));
-  }
-
-  deleteCard(cardId, token) {
-    return fetch(`${this._baseUrl}/cards/${cardId}`, {
-      method: "DELETE",
-      headers: {
-        ...this._headers,
-        authorization: `Bearer ${token}`,
-      },
-    }).then(this._checkResponse.bind(this));
-  }
-
-  toggleLike(cardId, isLiked, token) {
-    return fetch(`${this._baseUrl}/cards/${cardId}/likes`, {
-      method: isLiked ? "PUT" : "DELETE",
-      headers: {
-        ...this._headers,
-        authorization: `Bearer ${token}`,
-      },
-    }).then(this._checkResponse.bind(this));
-  }
-}
-
-// ⚠️ URL UNIFICADA SEGÚN EL BRIEF (Misma que auth.js)
-const api = new Api({
-  baseUrl: "https://se-register-api.en.tripleten-services.com/v1",
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
-
-export default api;
+// (Opcional) Si tu proyecto usa agregar/eliminar tarjetas, aquí irían esos métodos 
+// también con el header 'Authorization': `Bearer ${token}`
