@@ -16,7 +16,7 @@ import ProtectedRoute from './ProtectedRoute/ProtectedRoute';
 
 // Contextos y API
 import CurrentUserContext from '../contexts/CurrentUserContext';
-import * as api from '../utils/api'; // ✅ Importamos el nuevo módulo
+import * as api from '../utils/api'; 
 
 function App() {
   const navigate = useNavigate();
@@ -41,9 +41,12 @@ function App() {
     const token = localStorage.getItem('jwt');
     if (token) {
       api.getUserInfo(token)
-        .then((user) => {
-          setCurrentUser(user);
+        .then((res) => {
+          // ✅ CORRECCIÓN CLAVE: La API devuelve { data: { email, _id } }
+          // Así que guardamos res.data en el estado
+          setCurrentUser(res.data); 
           setIsLoggedIn(true);
+          
           // Si el usuario es válido, cargamos sus tarjetas
           return api.getInitialCards(token);
         })
@@ -51,9 +54,10 @@ function App() {
           setCards(cardsData);
         })
         .catch((err) => {
-          console.error('Token inválido o expirado:', err);
+          console.warn('Token inválido o expirado. Limpiando sesión.', err);
           localStorage.removeItem('jwt');
           setIsLoggedIn(false);
+          setCurrentUser({ name: '', avatar: '', email: '' });
         });
     }
   }, []);
@@ -64,7 +68,6 @@ function App() {
       .then(() => {
         setIsRegisterSuccess(true);
         setIsInfoTooltipOpen(true);
-        // Redirigir al login después de registrar
         navigate('/sign-in');
       })
       .catch((err) => {
@@ -78,17 +81,17 @@ function App() {
   const handleLogin = ({ email, password }) => {
     api.authorize(email, password)
       .then((data) => {
-        // La API de TripleTen devuelve { token: "..." }
+        // La API devuelve { token: "..." }
         if (data.token) {
           localStorage.setItem('jwt', data.token);
           setIsLoggedIn(true);
+          // Guardamos el email para que el Header lo muestre inmediatamente
           setCurrentUser((prev) => ({ ...prev, email: email }));
           navigate('/', { replace: true });
         }
       })
       .catch((err) => {
         console.error('Error en login:', err);
-        // Opcional: mostrar tooltip de error
         setIsRegisterSuccess(false);
         setIsInfoTooltipOpen(true);
       });
@@ -103,14 +106,13 @@ function App() {
     navigate('/sign-in', { replace: true });
   };
 
+  // Placeholders para las tarjetas (se implementarán en el siguiente paso)
   const handleCardLike = (card) => {
     console.log("Dar like a:", card);
-    // Aquí irá la lógica de la API para dar like en el próximo paso
   };
 
   const handleCardDelete = (card) => {
     console.log("Eliminar tarjeta:", card);
-    // Aquí irá la lógica de la API para eliminar en el próximo paso
   };
 
   // Función para cerrar todos los popups
@@ -124,60 +126,57 @@ function App() {
 
   return (
     <CurrentUserContext.Provider value={currentUser || { name: '', avatar: '', email: '' }}>
+      <Header 
+        loggedIn={isLoggedIn} 
+        email={currentUser.email}
+        onSignOut={handleSignOut}
+      />
       
-        <Header 
-          loggedIn={isLoggedIn} 
-          email={currentUser.email}
-          onSignOut={handleSignOut}
+      <Routes>
+        <Route path="/sign-up" element={<Register onRegister={handleRegister} />} />
+        <Route path="/sign-in" element={<Login onLogin={handleLogin} />} />
+        <Route 
+          path="/" 
+          element={
+            <ProtectedRoute 
+              loggedIn={isLoggedIn}
+              component={Main}
+              cards={cards}
+              onEditProfile={() => setIsEditProfileOpen(true)}
+              onAddCard={() => setIsAddCardOpen(true)}
+              onEditAvatar={() => setIsEditAvatarOpen(true)}
+              onCardClick={setSelectedCard}
+              onCardLike={handleCardLike}
+              onCardDelete={handleCardDelete}
+            />
+          } 
         />
-        
-        <Routes>
-          <Route path="/sign-up" element={<Register onRegister={handleRegister} />} />
-          <Route path="/sign-in" element={<Login onLogin={handleLogin} />} />
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute 
-                loggedIn={isLoggedIn}
-                component={Main}
-                cards={cards}
-                onEditProfile={() => setIsEditProfileOpen(true)}
-                onAddCard={() => setIsAddCardOpen(true)}
-                onEditAvatar={() => setIsEditAvatarOpen(true)}
-                onCardClick={setSelectedCard}
-                onCardLike={handleCardLike}
-                onCardDelete={handleCardDelete}
-              />
-            } 
-          />
-        </Routes>
+      </Routes>
 
-        {/* Modales solo si está logueado */}
-        {isLoggedIn && isEditProfileOpen && (
-          <EditProfile onClose={closeAllPopups} />
-        )}
+      {/* Modales con renderizado condicional específico */}
+      {isLoggedIn && isEditProfileOpen && (
+        <EditProfile onClose={closeAllPopups} />
+      )}
 
-        {isLoggedIn && isEditAvatarOpen && (
-          <EditAvatar onClose={closeAllPopups} />
-        )}
+      {isLoggedIn && isEditAvatarOpen && (
+        <EditAvatar onClose={closeAllPopups} />
+      )}
 
-        {isLoggedIn && isAddCardOpen && (
-          <NewCard onClose={closeAllPopups} />
-        )}
+      {isLoggedIn && isAddCardOpen && (
+        <NewCard onClose={closeAllPopups} />
+      )}
 
-        {isLoggedIn && selectedCard && (
-          <ImagePopup card={selectedCard} onClose={closeAllPopups} />
-        )}
+      {isLoggedIn && selectedCard && (
+        <ImagePopup card={selectedCard} onClose={closeAllPopups} />
+      )}
 
-        {/* Tooltip de registro (puede estar fuera porque se controla con su propio estado) */}
-        <InfoTooltip 
-          isOpen={isInfoTooltipOpen}
-          onClose={closeAllPopups}
-          isRegisterSuccess={isRegisterSuccess}
-        />
-        
-        <Footer />
+      <InfoTooltip 
+        isOpen={isInfoTooltipOpen}
+        onClose={closeAllPopups}
+        isRegisterSuccess={isRegisterSuccess}
+      />
       
+      <Footer />
     </CurrentUserContext.Provider>
   );
 }
