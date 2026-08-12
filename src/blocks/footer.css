@@ -1,9 +1,16 @@
 .footer {
-  font-family: "Inter", Arial, sans-serif;
+  width: 100%;
+  min-width: 100vw;
+  min-height: 120px;
   background-color: #000000;
   display: flex;
   align-items: center;
-  padding: 35px 0 60px;
+  justify-content: center;
+  margin: 0;
+  padding: 30px 0;
+  box-sizing: border-box;
+  position: relative;
+  left: 0;
 }
 
 .footer__copyright {
@@ -11,11 +18,13 @@
   line-height: 22px;
   color: #545454;
   margin: 0;
+  text-align: center;
 }
 
 @media screen and (max-width: 544px) {
   .footer {
-    padding: 30px 0 36px;
+    min-height: 85px;
+    padding: 20px 0;
   }
 
   .footer__copyright {

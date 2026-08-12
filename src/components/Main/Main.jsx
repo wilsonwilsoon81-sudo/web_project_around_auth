@@ -12,7 +12,14 @@ export default function Main({
   onCardClick,
 }) {
   
-  const currentUser = useContext(CurrentUserContext) || { name: "", about: "", avatar: "" };
+  const contextUser = useContext(CurrentUserContext) || {};
+  
+  const currentUser = {
+    name: contextUser.name || contextUser.email || "Usuario",
+    about: contextUser.about || "Sin descripción",
+    avatar: contextUser.avatar || "https://practicum-content.s3.us-west-1.amazonaws.com/software-engineer/around-project/default-avatar.jpg",
+    email: contextUser.email || ""
+  };
 
   return (
     <main className="content">
@@ -20,11 +27,8 @@ export default function Main({
         <div className="profile__image-container" id="avatar-container">
           <img
             className="profile__image"
-            src={
-              currentUser?.avatar ||
-              "https://practicum-content.s3.us-west-1.amazonaws.com/software-engineer/around-project/default-avatar.jpg"
-            }
-            alt={`Avatar de ${currentUser?.name || "Usuario"}`}
+            src={currentUser.avatar}
+            alt={`Avatar de ${currentUser.name}`}
           />
           <button
             type="button"
@@ -37,7 +41,7 @@ export default function Main({
 
         <div className="profile__info">
           <h1 className="profile__title">
-            {currentUser?.name || "Cargando..."}
+            {currentUser.name}
           </h1>
           <button
             aria-label="Editar perfil"
@@ -46,7 +50,7 @@ export default function Main({
             onClick={onEditProfile}
           ></button>
           <p className="profile__description">
-            {currentUser?.about || "Cargando..."}
+            {currentUser.about}
           </p>
         </div>
 
@@ -60,7 +64,7 @@ export default function Main({
 
       <section className="cards page__section">
         <ul className="cards__list">
-          {Array.isArray(cards) &&
+          {Array.isArray(cards) && cards.length > 0 ? (
             cards.map((card) => (
               <Card
                 key={card._id}
@@ -69,11 +73,14 @@ export default function Main({
                 onCardLike={onCardLike}
                 onCardDelete={onCardDelete}
               />
-            ))}
+            ))
+          ) : (
+            <p style={{ color: '#fff', textAlign: 'center', width: '100%' }}>
+              No hay tarjetas disponibles en este momento.
+            </p>
+          )}
         </ul>
       </section>
-
-      {}
     </main>
   );
 }

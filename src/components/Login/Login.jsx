@@ -36,7 +36,7 @@ function Login({ onLogin }) {
       </form>
       <p className="login__text">
         ¿Aún no eres miembro?{' '}
-        <Link to="/sign-up" className="login__link">
+        <Link to="/signup" className="login__link">
           Registrarse aquí
         </Link>
       </p>

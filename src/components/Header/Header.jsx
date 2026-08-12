@@ -1,26 +1,26 @@
 import { Link, useLocation } from 'react-router-dom';
 import logo from '../../images/logo.svg';
-import '../../blocks/Header.css';
+import '../../blocks/header.css';
 
 function Header({ loggedIn, email, onSignOut }) {
   const location = useLocation();
 
-  if (location.pathname === '/sign-up') {
+  if (location.pathname === '/signup') {
     return (
       <header className="header">
         <img src={logo} alt="Logo Around" className="header__logo" />
-        <Link to="/sign-in" className="header__link">
+        <Link to="/signin" className="header__link">
           Iniciar sesión
         </Link>
       </header>
     );
   }
 
-  if (location.pathname === '/sign-in') {
+  if (location.pathname === '/signin') {
     return (
       <header className="header">
         <img src={logo} alt="Logo Around" className="header__logo" />
-        <Link to="/sign-up" className="header__link">
+        <Link to="/signup" className="header__link">
           Regístrate
         </Link>
       </header>

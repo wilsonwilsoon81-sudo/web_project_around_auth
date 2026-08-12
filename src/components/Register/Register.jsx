@@ -36,7 +36,7 @@ function Register({ onRegister }) {
       </form>
       <p className="register__text">
         ¿Ya eres miembro?{' '}
-        <Link to="/sign-in" className="register__link">
+        <Link to="/signin" className="register__link">
           Inicia sesión aquí
         </Link>
       </p>

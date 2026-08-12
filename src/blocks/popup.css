@@ -9,6 +9,7 @@
   bottom: 0;
   right: 0;
   display: none;
+  z-index: 1000;
 }
 
 .popup__button {
@@ -97,13 +98,17 @@
   height: auto;
   width: auto;
   display: flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border-radius: 0;
   padding: 0;
+  position: relative;
 }
 
 .popup__image {
   max-width: 100%;
+  max-height: 75vh;
   object-fit: cover;
 }
 
@@ -190,7 +195,7 @@
 .profile__edit-avatar {
   position: absolute;
   top: 50%;
-  left: 40%;
+  left: 50%;
   transform: translate(-50%, -50%);
   width: 120px;
   height: 120px;
@@ -252,6 +257,7 @@
     top: -30px;
     width: 20px;
     height: 20px;
+    background-size: 20px 20px;
   }
 
   .popup__content {
@@ -273,16 +279,16 @@
   .popup__content_content_image {
     max-width: 75vw;
     padding: 0;
+  }
 
-    .profile__image {
-      width: 80px;
-      height: 80px;
-    }
+  .profile__image {
+    width: 80px;
+    height: 80px;
+  }
 
-    .profile__edit-avatar {
-      width: 26px;
-      height: 26px;
-      background-size: 26px 26px;
-    }
+  .profile__edit-avatar {
+    width: 80px;
+    height: 80px;
+    background-size: 20px 20px;
   }
 }

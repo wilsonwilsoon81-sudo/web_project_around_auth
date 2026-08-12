@@ -13,12 +13,14 @@ import InfoTooltip from './InfoTooltip/InfoTooltip';
 import ProtectedRoute from './ProtectedRoute/ProtectedRoute';
 import CurrentUserContext from '../contexts/CurrentUserContext';
 import * as api from '../utils/api'; 
+import * as auth from '../utils/auth';
 
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!localStorage.getItem('jwt'));
   const [isInfoTooltipOpen, setIsInfoTooltipOpen] = useState(false);
   const [isRegisterSuccess, setIsRegisterSuccess] = useState(false);
 
@@ -30,62 +32,60 @@ function App() {
   const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
 
-  useEffect(() => {
+    useEffect(() => {
     const token = localStorage.getItem('jwt');
-    console.log("🔍 1. Token encontrado en localStorage:", token);
-
     if (token) {
-      api.getUserInfo(token)
-        .then((res) => {
-          console.log("✅ 2. Respuesta exitosa de /users/me:", res);
-          setCurrentUser(res.data);
-          setIsLoggedIn(true);
-        })
-        .catch((err) => {
-          console.error("❌ ERROR REAL en /users/me (Token inválido):", err);
-          localStorage.removeItem('jwt');
-          setIsLoggedIn(false);
-          setCurrentUser({ name: '', avatar: '', email: '' });
-        });
+      Promise.all([
+        api.getUserInfo(token)
+          .then((res) => {
+            setCurrentUser(res.data || res);
+            setIsLoggedIn(true);
+          })
+          .catch(() => {
+            localStorage.removeItem('jwt');
+            setIsLoggedIn(false);
+            setCurrentUser({ name: '', avatar: '', email: '' });
+          }),
 
       api.getInitialCards(token)
-        .then((cardsData) => {
-          console.log("✅ Tarjetas cargadas exitosamente:", cardsData);
-          setCards(cardsData);
-        })
-        .catch((err) => {
-          console.warn("⚠️ No se pudieron cargar las tarjetas (quizás el endpoint cambió o no hay tarjetas):", err);
-          setCards([]);
-        });
-    }
-  }, []);
+          .then((cardsData) => {
+            setCards(Array.isArray(cardsData) ? cardsData : []);
+          })
+          .catch(() => {
+            setCards([]);
+          })
+      ]).finally(() => {
+        setIsLoading(false);
+      });
+    } 
+  }, []);  
 
   const handleRegister = ({ email, password }) => {
-    api.register(email, password)
+    auth.register(email, password)
       .then(() => {
         setIsRegisterSuccess(true);
         setIsInfoTooltipOpen(true);
-        navigate('/sign-in');
+        navigate('/signin');
       })
-      .catch((err) => {
-        console.error('Error en registro:', err);
+      .catch(() => {
         setIsRegisterSuccess(false);
         setIsInfoTooltipOpen(true);
       });
   };
 
   const handleLogin = ({ email, password }) => {
-    api.authorize(email, password)
+    auth.authorize(email, password)
       .then((data) => {
         if (data.token) {
           localStorage.setItem('jwt', data.token);
-          setIsLoggedIn(true);
-          setCurrentUser((prev) => ({ ...prev, email: email }));
-          navigate('/', { replace: true });
+          return api.getUserInfo(data.token).then((res) => {
+            setCurrentUser(res.data);
+            setIsLoggedIn(true);
+            navigate('/', { replace: true });
+          });
         }
       })
-      .catch((err) => {
-        console.error('Error en login:', err);
+      .catch(() => {
         setIsRegisterSuccess(false);
         setIsInfoTooltipOpen(true);
       });
@@ -96,15 +96,53 @@ function App() {
     setIsLoggedIn(false);
     setCurrentUser({ name: '', avatar: '', email: '' });
     setCards([]);
-    navigate('/sign-in', { replace: true });
+    navigate('/signin', { replace: true });
   };
 
   const handleCardLike = (card) => {
-    console.log("Dar like a:", card);
+    const token = localStorage.getItem('jwt');
+    const isLiked = card.likes.some(id => id === currentUser._id || id._id === currentUser._id);
+    
+    api.updateCardLike(token, card._id, !isLiked)
+      .then((updatedCard) => {
+        setCards((prevCards) => prevCards.map((c) => (c._id === card._id ? updatedCard : c)));
+      })
+      .catch((err) => console.error("Error al dar like:", err));
   };
 
   const handleCardDelete = (card) => {
-    console.log("Eliminar tarjeta:", card);
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarjeta?")) return;
+    const token = localStorage.getItem('jwt');
+
+    api.deleteCard(token, card._id)
+      .then(() => {
+        setCards((prevCards) => prevCards.filter((c) => c._id !== card._id));
+      })
+      .catch((err) => console.error("Error al eliminar tarjeta:", err));
+  };
+
+  const handleUpdateUser = ({ name, about }) => {
+    const token = localStorage.getItem('jwt');
+    return api.updateUserInfo(token, { name, about })
+      .then((updatedUser) => {
+        setCurrentUser(updatedUser);
+      });
+  };
+
+  const handleUpdateAvatar = ({ avatar }) => {
+    const token = localStorage.getItem('jwt');
+    return api.updateAvatar(token, { avatar })
+      .then((updatedUser) => {
+        setCurrentUser(updatedUser);
+      });
+  };
+
+  const handleAddCard = ({ name, link }) => {
+    const token = localStorage.getItem('jwt');
+    return api.addCard(token, { name, link })
+      .then((newCard) => {
+        setCards((prevCards) => [newCard, ...prevCards]);
+      });
   };
 
   const closeAllPopups = () => {
@@ -115,6 +153,10 @@ function App() {
     setIsInfoTooltipOpen(false);
   };
 
+   if (isLoading) {
+    return <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>Cargando...</div>;
+  }
+
   return (
     <CurrentUserContext.Provider value={currentUser || { name: '', avatar: '', email: '' }}>
       <Header 
@@ -124,8 +166,8 @@ function App() {
       />
       
       <Routes>
-        <Route path="/sign-up" element={<Register onRegister={handleRegister} />} />
-        <Route path="/sign-in" element={<Login onLogin={handleLogin} />} />
+        <Route path="/signup" element={<Register onRegister={handleRegister} />} />
+        <Route path="/signin" element={<Login onLogin={handleLogin} />} />
         <Route 
           path="/" 
           element={
@@ -144,21 +186,35 @@ function App() {
         />
       </Routes>
 
-      
       {isLoggedIn && isEditProfileOpen && (
-        <EditProfile onClose={closeAllPopups} />
+        <EditProfile 
+          isOpen={isEditProfileOpen}
+          onClose={closeAllPopups} 
+          onUpdateUser={handleUpdateUser} 
+        />
       )}
 
       {isLoggedIn && isEditAvatarOpen && (
-        <EditAvatar onClose={closeAllPopups} />
+        <EditAvatar 
+          isOpen={isEditAvatarOpen}
+          onClose={closeAllPopups} 
+          onUpdateAvatar={handleUpdateAvatar} 
+        />
       )}
 
       {isLoggedIn && isAddCardOpen && (
-        <NewCard onClose={closeAllPopups} />
+        <NewCard 
+          isOpen={isAddCardOpen}
+          onClose={closeAllPopups} 
+          onAddPlace={handleAddCard} 
+        />
       )}
 
       {isLoggedIn && selectedCard && (
-        <ImagePopup card={selectedCard} onClose={closeAllPopups} />
+        <ImagePopup 
+          card={selectedCard} 
+          onClose={closeAllPopups} 
+        />
       )}
 
       <InfoTooltip 
@@ -168,7 +224,6 @@ function App() {
       />
       
       {location.pathname === '/' && <Footer />}
-
     </CurrentUserContext.Provider>
   );
 }
