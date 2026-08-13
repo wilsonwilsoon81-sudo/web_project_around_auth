@@ -28,16 +28,22 @@ Aplicación web de tarjetas interactivas con un sistema completo de autenticaci�
 1. Clona este repositorio:
    ```bash
    git clone https://github.com/wilsonwilsoon81-sudo/web_project_around_auth.git
+   ```
 
 2. Navega a la carpeta del proyecto:
-   cd web_project_arouns_auth
+   ```bash
+   cd web_project_around_auth
+   ```
 
 3. Instala las dependencias:
+   ```bash
    npm install
+   ```
 
 4. Inicia el servidor de desarrollo:
+   ```bash
    npm run dev
-
+   ```
 5. Abre tu navegador en http://localhost:3000 (o el puerto que indique la terminal).
 
 🔗 Enlace

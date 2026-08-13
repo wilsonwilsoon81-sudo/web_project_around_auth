@@ -4,97 +4,67 @@ import CurrentUserContext from "../../../../contexts/CurrentUserContext.js";
 export default function EditProfile({ isOpen, onClose, onUpdateUser }) {
   
   const currentUser = useContext(CurrentUserContext) || {};
-
   const [name, setName] = useState(currentUser?.name || "");
   const [description, setDescription] = useState(currentUser?.about || "");
-  const [nameError, setNameError] = useState("");
-  const [descriptionError, setDescriptionError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function validateName(value) {
-    if (!value || value.trim() === "") return "El nombre es obligatorio";
-    if (value.length < 2) return "El nombre debe tener al menos 2 caracteres";
-    if (value.length > 40) return "El nombre no puede tener más de 40 caracteres";
-    return "";
+  if (!isOpen) {
+    return null;
   }
-
-  function validateDescription(value) {
-    if (!value || value.trim() === "") return "La descripción es obligatoria";
-    if (value.length < 2) return "La descripción debe tener al menos 2 caracteres";
-    if (value.length > 200) return "La descripción no puede tener más de 200 caracteres";
-    return "";
-  }
-
-  function handleNameChange(e) {
-    const value = e.target.value;
-    setName(value);
-    setNameError(validateName(value));
-  }
-
-  function handleDescriptionChange(e) {
-    const value = e.target.value;
-    setDescription(value);
-    setDescriptionError(validateDescription(value));
-  }
-
-  const isValid = !nameError && !descriptionError && name && description;
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!isValid) return;
     setIsSubmitting(true);
-
     if (onUpdateUser) {
       onUpdateUser({ name, about: description })
-        .then(() => { if (onClose) onClose(); })
+        .then(() => onClose())
         .catch((err) => console.error("Error al actualizar perfil:", err))
-        .finally(() => { setIsSubmitting(false); });
-    } else {
-      setIsSubmitting(false);
+        .finally(() => setIsSubmitting(false));
     }
   }
 
   return (
-    <form className="popup__form" name="profile-form" id="edit-profile-form" noValidate onSubmit={handleSubmit}>
-      <label className="popup__label">
-        <input
-          className={`popup__input popup__input_type_name ${nameError ? "popup__input_type_invalid" : ""}`}
-          id="owner-name"
-          maxLength="40"
-          minLength="2"
-          name="userName"
-          placeholder="Nombre"
-          required
-          type="text"
-          value={name}
-          onChange={handleNameChange}
-        />
-        <span className={`popup__input-error ${nameError ? "popup__input-error_active" : ""}`} id="owner-name-error">
-          {nameError}
-        </span>
-      </label>
+    <div className="popup popup_is-opened">
+      <div className="popup__content">
+        <button type="button" className="popup__close" onClick={onClose} aria-label="Cerrar"></button>
+        <h3 className="popup__title">Editar perfil</h3>
+        
+        <form className="popup__form" name="profile-form" onSubmit={handleSubmit} noValidate>
+          <label className="popup__label">
+            <input
+              className="popup__input popup__input_type_name"
+              name="name"
+              placeholder="Nombre"
+              required
+              minLength="2"
+              maxLength="40"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
 
-      <label className="popup__label">
-        <input
-          className={`popup__input popup__input_type_description ${descriptionError ? "popup__input_type_invalid" : ""}`}
-          id="owner-description"
-          maxLength="200"
-          minLength="2"
-          name="userDescription"
-          placeholder="Acerca de mí"
-          required
-          type="text"
-          value={description}
-          onChange={handleDescriptionChange}
-        />
-        <span className={`popup__input-error ${descriptionError ? "popup__input-error_active" : ""}`} id="owner-description-error">
-          {descriptionError}
-        </span>
-      </label>
+          <label className="popup__label">
+            <input
+              className="popup__input popup__input_type_description"
+              name="about"
+              placeholder="Acerca de mí"
+              required
+              minLength="2"
+              maxLength="200"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </label>
 
-      <button className={`button popup__button ${!isValid ? "popup__button_disabled" : ""}`} type="submit" disabled={isSubmitting || !isValid}>
-        {isSubmitting ? "Guardando..." : "Guardar"}
-      </button>
-    </form>
+          <button 
+            type="submit" 
+            className={`button popup__button ${!name || !description ? 'popup__button_disabled' : ''}`}
+            disabled={isSubmitting || !name || !description}
+          >
+            {isSubmitting ? "Guardando..." : "Guardar"}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }

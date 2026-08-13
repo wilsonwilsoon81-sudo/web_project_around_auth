@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Header from './Header/Header';
 import Main from './Main/Main';
 import Footer from './Footer/Footer';
@@ -34,31 +34,33 @@ function App() {
 
     useEffect(() => {
     const token = localStorage.getItem('jwt');
+    
     if (token) {
-      Promise.all([
-        api.getUserInfo(token)
-          .then((res) => {
-            setCurrentUser(res.data || res);
-            setIsLoggedIn(true);
-          })
-          .catch(() => {
-            localStorage.removeItem('jwt');
-            setIsLoggedIn(false);
-            setCurrentUser({ name: '', avatar: '', email: '' });
-          }),
+      auth.checkToken(token)
+        .then((res) => {
+          setCurrentUser(res.data || res);
+          setIsLoggedIn(true);
+        })
+        .catch(() => {
+          console.warn("Token inválido, cerrando sesión");
+          localStorage.removeItem('jwt');
+          setIsLoggedIn(false);
+          setCurrentUser({ name: '', avatar: '', email: '' });
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
 
       api.getInitialCards(token)
-          .then((cardsData) => {
-            setCards(Array.isArray(cardsData) ? cardsData : []);
-          })
-          .catch(() => {
-            setCards([]);
-          })
-      ]).finally(() => {
-        setIsLoading(false);
-      });
+        .then((cardsData) => {
+          setCards(Array.isArray(cardsData) ? cardsData : []);
+        })
+        .catch(() => {
+          console.warn("No se pudieron cargar las tarjetas (API temporal)");
+          setCards([]); 
+        });
     } 
-  }, []);  
+  }, []);
 
   const handleRegister = ({ email, password }) => {
     auth.register(email, password)
@@ -79,7 +81,7 @@ function App() {
         if (data.token) {
           localStorage.setItem('jwt', data.token);
           return api.getUserInfo(data.token).then((res) => {
-            setCurrentUser(res.data);
+            setCurrentUser(res.data || res);
             setIsLoggedIn(true);
             navigate('/', { replace: true });
           });
@@ -153,7 +155,7 @@ function App() {
     setIsInfoTooltipOpen(false);
   };
 
-   if (isLoading) {
+  if (isLoading) {
     return <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>Cargando...</div>;
   }
 
@@ -184,6 +186,10 @@ function App() {
             />
           } 
         />
+        
+        <Route path="*" element={
+          isLoggedIn ? <Navigate to="/" replace /> : <Navigate to="/signin" replace />
+        } />
       </Routes>
 
       {isLoggedIn && isEditProfileOpen && (

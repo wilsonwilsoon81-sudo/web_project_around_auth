@@ -4,95 +4,71 @@ export default function NewCard({ isOpen, onClose, onAddPlace }) {
   
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
-  const [nameError, setNameError] = useState("");
-  const [linkError, setLinkError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function validateName(value) {
-    if (!value || value.trim() === "") return "El nombre es obligatorio";
-    if (value.length < 2) return "El nombre debe tener al menos 2 caracteres";
-    if (value.length > 30) return "El nombre no puede tener más de 30 caracteres";
-    return "";
+  if (!isOpen) {
+    return null;
   }
-
-  function validateLink(value) {
-    if (!value || value.trim() === "") return "La URL es obligatoria";
-    try {
-      new URL(value);
-      return "";
-    } catch {
-      return "Ingresa una URL válida";
-    }
-  }
-
-  function handleNameChange(e) {
-    const value = e.target.value;
-    setName(value);
-    setNameError(validateName(value));
-  }
-
-  function handleLinkChange(e) {
-    const value = e.target.value;
-    setLink(value);
-    setLinkError(validateLink(value));
-  }
-
-  const isValid = !nameError && !linkError && name && link;
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!isValid) return;
     setIsSubmitting(true);
-
     if (onAddPlace) {
       onAddPlace({ name, link })
-        .then(() => { if (onClose) onClose(); })
+        .then(() => onClose())
         .catch((err) => console.error("Error al crear tarjeta:", err))
-        .finally(() => { setIsSubmitting(false); });
-    } else {
-      setIsSubmitting(false);
+        .finally(() => setIsSubmitting(false));
     }
   }
 
   return (
-    <form className="popup__form" name="new-place-form" id="new-place-form" noValidate onSubmit={handleSubmit}>
-      <label className="popup__label">
-        <input
-          className={`popup__input popup__input_type_name ${nameError ? "popup__input_type_invalid" : ""}`}
-          id="place-name"
-          maxLength="30"
-          minLength="2"
-          name="name"
-          placeholder="Nombre del lugar"
-          required
-          type="text"
-          value={name}
-          onChange={handleNameChange}
-        />
-        <span className={`popup__input-error ${nameError ? "popup__input-error_active" : ""}`} id="place-name-error">
-          {nameError}
-        </span>
-      </label>
+    <div className="popup popup_is-opened">
+      <div className="popup__content">
+        <button 
+          type="button" 
+          className="popup__close" 
+          onClick={onClose}
+          aria-label="Cerrar"
+        ></button>
+        <h3 className="popup__title">Nuevo lugar</h3>
+        
+        <form className="popup__form" name="new-place-form" onSubmit={handleSubmit} noValidate>
+          <label className="popup__label">
+            <input
+              className="popup__input popup__input_type_name"
+              name="name"
+              placeholder="Nombre del lugar"
+              required
+              minLength="2"
+              maxLength="30"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <span className="popup__input-error"></span>
+          </label>
 
-      <label className="popup__label">
-        <input
-          className={`popup__input popup__input_type_url ${linkError ? "popup__input_type_invalid" : ""}`}
-          id="place-link"
-          name="link"
-          placeholder="Enlace a la imagen"
-          required
-          type="url"
-          value={link}
-          onChange={handleLinkChange}
-        />
-        <span className={`popup__input-error ${linkError ? "popup__input-error_active" : ""}`} id="place-link-error">
-          {linkError}
-        </span>
-      </label>
+          <label className="popup__label">
+            <input
+              className="popup__input popup__input_type_url"
+              name="link"
+              placeholder="Enlace a la imagen"
+              required
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+            />
+            <span className="popup__input-error"></span>
+          </label>
 
-      <button className={`button popup__button ${!isValid ? "popup__button_disabled" : ""}`} type="submit" disabled={isSubmitting || !isValid}>
-        {isSubmitting ? "Creando..." : "Crear"}
-      </button>
-    </form>
+          <button 
+            type="submit" 
+            className={`button popup__button ${!name || !link ? 'popup__button_disabled' : ''}`}
+            disabled={isSubmitting || !name || !link}
+          >
+            {isSubmitting ? "Creando..." : "Crear"}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }

@@ -4,67 +4,58 @@ import CurrentUserContext from "../../../../contexts/CurrentUserContext.js";
 export default function EditAvatar({ isOpen, onClose, onUpdateAvatar }) {
   
   const currentUser = useContext(CurrentUserContext) || {};
-  const avatarInputRef = useRef();
-  
+  const avatarRef = useRef();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [avatarError, setAvatarError] = useState("");
-  const [avatarValue, setAvatarValue] = useState(currentUser?.avatar || "");
 
-  function validateUrl(value) {
-    if (!value || value.trim() === "") return "La URL es obligatoria";
-    try {
-      new URL(value);
-      return "";
-    } catch {
-      return "Ingresa una URL válida";
-    }
+  if (!isOpen) {
+    return null;
   }
-
-  function handleAvatarChange(e) {
-    const value = e.target.value;
-    setAvatarValue(value);
-    setAvatarError(validateUrl(value));
-  }
-
-  const isValid = !avatarError && avatarValue;
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!isValid) return;
     setIsSubmitting(true);
-
     if (onUpdateAvatar) {
-      onUpdateAvatar({ avatar: avatarInputRef.current.value })
-        .then(() => { if (onClose) onClose(); })
+      onUpdateAvatar({ avatar: avatarRef.current.value })
+        .then(() => onClose())
         .catch((err) => console.error("Error al actualizar avatar:", err))
-        .finally(() => { setIsSubmitting(false); });
-    } else {
-      setIsSubmitting(false);
+        .finally(() => setIsSubmitting(false));
     }
   }
 
   return (
-    <form className="popup__form" name="avatar-form" id="edit-avatar-form" noValidate onSubmit={handleSubmit}>
-      <label className="popup__label">
-        <input
-          className={`popup__input popup__input_type_avatar ${avatarError ? "popup__input_type_invalid" : ""}`}
-          id="avatar-url"
-          name="userAvatar"
-          placeholder="URL de la imagen"
-          required
-          type="url"
-          ref={avatarInputRef}
-          defaultValue={currentUser?.avatar}
-          onChange={handleAvatarChange}
-        />
-        <span className={`popup__input-error ${avatarError ? "popup__input-error_active" : ""}`} id="avatar-url-error">
-          {avatarError}
-        </span>
-      </label>
+    <div className="popup popup_is-opened">
+      <div className="popup__content">
+        <button 
+          type="button" 
+          className="popup__close" 
+          onClick={onClose}
+          aria-label="Cerrar"
+        ></button>
+        <h3 className="popup__title">Actualizar avatar</h3>
+        
+        <form className="popup__form" name="avatar-form" onSubmit={handleSubmit} noValidate>
+          <label className="popup__label">
+            <input
+              ref={avatarRef}
+              className="popup__input popup__input_type_avatar"
+              name="avatar"
+              placeholder="Enlace de la imagen"
+              required
+              type="url"
+              defaultValue={currentUser.avatar}
+            />
+            <span className="popup__input-error"></span>
+          </label>
 
-      <button className={`button popup__button ${!isValid ? "popup__button_disabled" : ""}`} type="submit" disabled={isSubmitting || !isValid}>
-        {isSubmitting ? "Guardando..." : "Guardar"}
-      </button>
-    </form>
+          <button 
+            type="submit" 
+            className="button popup__button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Guardando..." : "Guardar"}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }

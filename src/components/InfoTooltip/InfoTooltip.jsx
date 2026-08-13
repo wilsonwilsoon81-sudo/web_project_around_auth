@@ -1,4 +1,4 @@
-import closeIcon from '../../images/close Icon.png';
+import closeIcon from '../../images/Close Icon.png';
 import successIcon from '../../images/chulo.png';
 import errorIcon from '../../images/equis.png';
 
