@@ -49,16 +49,16 @@ Aplicación web de tarjetas interactivas con un sistema completo de autenticaci�
 ## 📸 Capturas de Pantalla
 
 ### Pantalla de Inicio de Sesión
-![Login](./images/login-screenshot.jpg)
+![Login](./src/images/login-screenshot.jpg)
 
 ### Página Principal con Perfil
-![Main Page](./images/main-page-screenshot.jpg)
+![Main Page](./src/images/main-page-screenshot.jpg)
 
 ### Popup de Editar Perfil (Funcional)
-![Edit Profile Popup](./images/edit-profile-popup.jpg)
+![Edit Profile Popup](./src/images/edit-profile-popup.jpg)
 
 ### Diseño Responsive en Móvil
-![Mobile View](./images/responsive-mobile.jpg)
+![Mobile View](./src/images/responsive-mobile.jpg)
 
 🔗 Enlace
 
