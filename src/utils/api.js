@@ -4,7 +4,6 @@ const handleResponse = (res) => {
   return res.ok ? res.json() : Promise.reject(`Error: ${res.status}`);
 };
 
-// --- AUTENTICACIÓN Y USUARIO ---
 export const getUserInfo = (token) => {
   return fetch(`${BASE_URL}/users/me`, {
     method: 'GET',

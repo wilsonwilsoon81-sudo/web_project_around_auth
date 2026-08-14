@@ -46,6 +46,20 @@ Aplicación web de tarjetas interactivas con un sistema completo de autenticaci�
    ```
 5. Abre tu navegador en http://localhost:3000 (o el puerto que indique la terminal).
 
+## 📸 Capturas de Pantalla
+
+### Pantalla de Inicio de Sesión
+![Login](./images/login-screenshot.jpg)
+
+### Página Principal con Perfil
+![Main Page](./images/main-page-screenshot.jpg)
+
+### Popup de Editar Perfil (Funcional)
+![Edit Profile Popup](./images/edit-profile-popup.jpg)
+
+### Diseño Responsive en Móvil
+![Mobile View](./images/responsive-mobile.jpg)
+
 🔗 Enlace
 
 Repositorio en GitHub: https://github.com/wilsonwilsoon81-sudo/web_project_around_auth.git
