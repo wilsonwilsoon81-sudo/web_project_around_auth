@@ -55,7 +55,7 @@ Aplicación web de tarjetas interactivas con un sistema completo de autenticaci�
 ![Main Page](./src/images/main-page-screenshot.jpg)
 
 ### Popup de Editar Perfil (Funcional)
-![Edit Profile Popup](./src/images/edit-profile-popup.jpg)
+![Edit Profile Popup](./src/images/Edit-profile-popup.jpg)
 
 ### Diseño Responsive en Móvil
 ![Mobile View](./src/images/responsive-mobile.jpg)
