@@ -1,6 +1,6 @@
-import closeIcon from '../../images/Close Icon.png';
-import successIcon from '../../images/chulo.png';
-import errorIcon from '../../images/equis.png';
+import closeIcon from '../../images/close.svg';
+import successIcon from '../../images/success-icon.svg';
+import errorIcon from '../../images/error-icon.svg';
 
 function InfoTooltip({ isOpen, onClose, isRegisterSuccess }) {
   if (!isOpen) {

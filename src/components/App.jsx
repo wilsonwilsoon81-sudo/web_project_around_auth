@@ -7,6 +7,7 @@ import ImagePopup from './ImagePopup/ImagePopup';
 import EditProfile from './Main/components/EditProfile/EditProfile';
 import NewCard from './Main/components/NewCard/NewCard';
 import EditAvatar from './Main/components/EditAvatar/EditAvatar';
+import Popup from './Main/components/Popup/Popup';
 import Register from './Register/Register';
 import Login from './Login/Login';
 import InfoTooltip from './InfoTooltip/InfoTooltip';
@@ -40,26 +41,25 @@ function App() {
         .then((res) => {
           setCurrentUser(res.data || res);
           setIsLoggedIn(true);
+          
+          return api.getInitialCards(token)
+            .then((cardsData) => {
+              setCards(Array.isArray(cardsData) ? cardsData : []);
+            })
+            .catch(() => {
+              setCards([]);
+            });
         })
         .catch(() => {
-          console.warn("Token inválido, cerrando sesión");
           localStorage.removeItem('jwt');
           setIsLoggedIn(false);
           setCurrentUser({ name: '', avatar: '', email: '' });
+          setCards([]);
         })
         .finally(() => {
           setIsLoading(false);
         });
-
-      api.getInitialCards(token)
-        .then((cardsData) => {
-          setCards(Array.isArray(cardsData) ? cardsData : []);
-        })
-        .catch(() => {
-          console.warn("No se pudieron cargar las tarjetas (API temporal)");
-          setCards([]); 
-        });
-    } 
+    }
   }, []);
 
   const handleRegister = ({ email, password }) => {
@@ -80,7 +80,7 @@ function App() {
       .then((data) => {
         if (data.token) {
           localStorage.setItem('jwt', data.token);
-          return api.getUserInfo(data.token).then((res) => {
+          return auth.checkToken(data.token).then((res) => {
             setCurrentUser(res.data || res);
             setIsLoggedIn(true);
             navigate('/', { replace: true });
@@ -168,8 +168,12 @@ function App() {
       />
       
       <Routes>
-        <Route path="/signup" element={<Register onRegister={handleRegister} />} />
-        <Route path="/signin" element={<Login onLogin={handleLogin} />} />
+        <Route path="/signup" element={
+          isLoggedIn ? <Navigate to="/" replace /> : <Register onRegister={handleRegister} />
+        } />
+        <Route path="/signin" element={
+          isLoggedIn ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />
+        } />
         <Route 
           path="/" 
           element={
@@ -193,27 +197,30 @@ function App() {
       </Routes>
 
       {isLoggedIn && isEditProfileOpen && (
-        <EditProfile 
-          isOpen={isEditProfileOpen}
-          onClose={closeAllPopups} 
-          onUpdateUser={handleUpdateUser} 
-        />
+        <Popup title="Editar perfil" onClose={closeAllPopups}>
+          <EditProfile 
+            onUpdateUser={handleUpdateUser} 
+            onClose={closeAllPopups}
+          />
+        </Popup>
       )}
 
       {isLoggedIn && isEditAvatarOpen && (
-        <EditAvatar 
-          isOpen={isEditAvatarOpen}
-          onClose={closeAllPopups} 
-          onUpdateAvatar={handleUpdateAvatar} 
-        />
+        <Popup title="Actualizar avatar" onClose={closeAllPopups}>
+          <EditAvatar 
+            onUpdateAvatar={handleUpdateAvatar} 
+            onClose={closeAllPopups}
+          />
+        </Popup>
       )}
 
       {isLoggedIn && isAddCardOpen && (
-        <NewCard 
-          isOpen={isAddCardOpen}
-          onClose={closeAllPopups} 
-          onAddPlace={handleAddCard} 
-        />
+        <Popup title="Nuevo lugar" onClose={closeAllPopups}>
+          <NewCard 
+            onAddPlace={handleAddCard} 
+            onClose={closeAllPopups}
+          />
+        </Popup>
       )}
 
       {isLoggedIn && selectedCard && (

@@ -44,7 +44,7 @@ Aplicación web de tarjetas interactivas con un sistema completo de autenticaci�
    ```bash
    npm run dev
    ```
-5. Abre tu navegador en http://localhost:3000 (o el puerto que indique la terminal).
+Abre tu navegador en http://localhost:3000 (o el puerto que indique la terminal, usualmente 5173 en Vite).
 
 ## 📸 Capturas de Pantalla
 
@@ -55,13 +55,12 @@ Aplicación web de tarjetas interactivas con un sistema completo de autenticaci�
 ![Main Page](./src/images/main-page-screenshot.jpg)
 
 ### Popup de Editar Perfil (Funcional)
-![Edit Profile Popup](./src/images/Edit-profile-popup.jpg)
+![Edit Profile Popup](./src/images/edit-profile-popup.jpg)
 
 ### Diseño Responsive en Móvil
 ![Mobile View](./src/images/responsive-mobile.jpg)
 
-🔗 Enlace
-
-Repositorio en GitHub: https://github.com/wilsonwilsoon81-sudo/web_project_around_auth.git
+🔗 Enlaces
+Repositorio en GitHub: https://github.com/wilsonwilsoon81-sudo/web_project_around_auth
 
 Desarrollado por Wilson Rolando Herrera Romero como parte del programa de Practicum.
